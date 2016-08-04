@@ -1,0 +1,52 @@
+#!/bin/csh
+#
+# Specify the queue
+#PBS -q default
+#
+# Connect the standard output and error streams:
+#PBS -j oe
+#
+##############################################################
+## IMPORTANT:  You need to change the following two comands ##
+############################################################## 
+#
+# Choose the number of nodes & processors per node:
+#
+#PBS -l nodes=1:ppn=2
+#
+# Choose the time your code will need at most:
+#
+#PBS -l walltime=00:10:00
+#
+##############################################################
+##    Also set the following entries:                       ##
+##############################################################
+
+# Run dir:
+set RUNDIR = "/home/jds32/Assignment2_110511/Parallel_files"
+
+# Application name:
+set RUNFILE = "main"
+
+##############################################################
+##     Below this nothing should have to be changed !!!     ##
+##############################################################
+
+echo Running on host `hostname`
+echo Changing to $RUNDIR
+cd $RUNDIR
+echo Time is `date`
+echo This jobs runs on the following processors:
+echo `cat $PBS_NODEFILE`
+
+echo Create a mchine file for MPICH
+cat $PBS_NODEFILE > machine.test
+
+# Define number of processors
+set NPROCS=`wc -l < $PBS_NODEFILE`
+
+echo "Will run command: mpirun -np $NPROCS -machinefile machine.test $RUNFILE"
+echo "Starting job..."
+# Run the parallel MPI executable $RUNFILE
+time mpirun  -np $NPROCS -machinefile machine.test $RUNFILE 
+rm -rf machine.test

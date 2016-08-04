@@ -1,0 +1,10 @@
+Code Diary
+
+26/06/16
+
+Changed the PCG jacobi to have a preconditioner which is matrix free. Works in the
+sequential case but having same problems with the parallel case.
+For the parallel case there is a problem with the sparsegather function for both
+pcg.f90 and jacobi.f90. Not sure what the fix will be.
+First try altering the main driver and just using a broadcast command, similar to the
+simple iterative.f90 drivers.

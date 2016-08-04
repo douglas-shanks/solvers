@@ -1,0 +1,17 @@
+###########################################################################
+
+This is a simple 1D test program to solve the heat equation
+with Dirichlet boundary conditions and initial condition 
+u_0(x,0) = sin(pi*x).
+
+To run:
+
+make clean
+make
+./test1D
+
+This generates the exact solution, FTCS solution, BTCS solution
+and CN solution. The 2 norm of the error is then computed for each.
+
+
+############################################################################
