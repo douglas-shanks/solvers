@@ -7,6 +7,6 @@ the steady state version of the linear diffusion PDE.
 - PCG (Jacobi diag)  (tick)
 - PCG (Jacobi block)  (to do)
 - GMG, V-cycle iterative solver (to do)
-- CG-GMG (CG preconditioned with one V-cycle) (tick)
+- CG-GMG (CG preconditioned with one V-cycle) (to do)
 
 - Thread the whole problem using openMP (I have up to 8 threads, 2 per core :( )
