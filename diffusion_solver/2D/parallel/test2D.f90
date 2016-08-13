@@ -12,7 +12,7 @@ program test2D
   include "mpif.h"
   
   real (kind=8) :: eps
-  integer :: kmax, its
+  integer :: kmax, its,its_total
   parameter (eps = 1.0d-16, kmax = 1000)
   
   type(Matrix) ::   Aftcs, Acn, Acnrhs, Abtcs, P
@@ -318,7 +318,7 @@ program test2D
 ! Make BTCS matrix  
   call BTCSmatrix(Abtcs,alpha,tmax,m,Nt,ibeg,iend) 
   
-    its_total = 0   
+   its_total = 0   
 	! now solve and produce output information 
 	 if (flag == 0) then
 	 
@@ -393,7 +393,7 @@ program test2D
     print*, ' Solver iterations total'   
     print*, its_total
     print*, ' Average Solver iterations'
-    print*, NINT(real(its_total/(Nt-1)))
+    print*, ((its_total/(Nt)))
   	
   	WRITE(*,*)
   	WRITE(*,*) '=========================================================================' 

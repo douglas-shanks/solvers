@@ -25,22 +25,17 @@ subroutine BTCSmatrix(A,alpha,tmax,m,Nt,ibeg,iend)
   inz = 0
   do row=ibeg,iend
 
-! Set the diagonal entry in row
+! Set the diagonal entry and off-diagonal entries in row. 
 
-     v   = 1.0_8 + 4.0_8*R1
+     j = (row-1)/(m-1) + 1
+     i = row - (j-1)*(m-1)  
      inz = inz + 1
 
-     A%aa(inz) = v
+     A%aa(inz) = 1.0_8 + 4.0_8*R1
      A%ii(row) = inz
      A%jj(inz) = row
 
-! Set the off-diagonal entries in row. To do this we calculate 
-! the indices (i,j) in the cartesian numbering of the unknowns
-! and then set the off-diagonal entries accordingly  
 
-     v = -R1
-     j = (row-1)/(m-1) + 1
-     i = row - (j-1)*(m-1)  
 
 ! If i = 1 then there is no (geometric) left neighbour, thus no entry
 
@@ -48,7 +43,7 @@ subroutine BTCSmatrix(A,alpha,tmax,m,Nt,ibeg,iend)
         col = row - 1  
         inz = inz + 1
      
-        A%aa(inz) = v
+        A%aa(inz) = -R1
         A%jj(inz) = col
      endif
 
@@ -58,7 +53,7 @@ subroutine BTCSmatrix(A,alpha,tmax,m,Nt,ibeg,iend)
         col = row + 1  
         inz = inz + 1
      
-        A%aa(inz) = v
+        A%aa(inz) = -R1
         A%jj(inz) = col
      endif
 
@@ -68,7 +63,7 @@ subroutine BTCSmatrix(A,alpha,tmax,m,Nt,ibeg,iend)
         col = row - m + 1 
         inz = inz + 1
      
-        A%aa(inz) = v
+        A%aa(inz) = -R1
         A%jj(inz) = col
      endif
 
@@ -78,7 +73,7 @@ subroutine BTCSmatrix(A,alpha,tmax,m,Nt,ibeg,iend)
         col = row + m - 1 
         inz = inz + 1
      
-        A%aa(inz) = v
+        A%aa(inz) = -R1
         A%jj(inz) = col
      endif
   end do

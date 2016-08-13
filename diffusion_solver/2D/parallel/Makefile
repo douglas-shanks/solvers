@@ -61,12 +61,15 @@ vecdot.o: vecdot.f90 header.o
 	
 FDsolution.o: FDsolution.f90 header.o
 	$(F95) $(OPT) -c FDsolution.f90		
-
+	
+alpha.o: alpha.f90 header.o
+	$(F95) $(OPT) -c alpha.f90	
+	
 test2D.o: test2D.f90 header.o
 	$(F95) $(OPT) -c test2D.f90
 
-test2D: test2D.o exactsoln2D.o sparsegather.o Mat_Mult.o greetings.o FTCSmatrix.o BTCSmatrix.o BTCSmatrix_PRE.o CNmatrix.o CNrhs.o norm.o error.o error_jac.o jacobi.o cg.o pcg.o vecdot.o FDsolution.o
-	 $(F95) -o test2D test2D.o header.o sparsegather.o exactsoln2D.o greetings.o Mat_Mult.o FTCSmatrix.o BTCSmatrix.o BTCSmatrix_PRE.o CNmatrix.o CNrhs.o norm.o error.o jacobi.o cg.o pcg.o vecdot.o  error_jac.o FDsolution.o  $(LIB_LIST)
+test2D: test2D.o exactsoln2D.o sparsegather.o Mat_Mult.o greetings.o FTCSmatrix.o BTCSmatrix.o BTCSmatrix_PRE.o CNmatrix.o CNrhs.o norm.o error.o error_jac.o jacobi.o cg.o pcg.o vecdot.o FDsolution.o alpha.o
+	 $(F95) -o test2D test2D.o header.o sparsegather.o exactsoln2D.o greetings.o Mat_Mult.o FTCSmatrix.o BTCSmatrix.o BTCSmatrix_PRE.o CNmatrix.o CNrhs.o norm.o error.o jacobi.o cg.o pcg.o vecdot.o  error_jac.o FDsolution.o alpha.o  $(LIB_LIST)
 
 # Note that the blas are only used in the linking step
 clean: 
