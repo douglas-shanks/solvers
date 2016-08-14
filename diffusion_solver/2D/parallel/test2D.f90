@@ -12,14 +12,14 @@ program test2D
   include "mpif.h"
   
   real (kind=8) :: eps
-  integer :: kmax, its,its_total
+  integer :: kmax, its
   parameter (eps = 1.0d-16, kmax = 1000)
   
-  type(Matrix) ::   Acn, Acnrhs, Abtcs, P
-  type(Vector) ::  x, xcn, y, Ucn, Ubtcs
+  type(Matrix) ::   Aftcs, Acn, Acnrhs, Abtcs, P
+  type(Vector) ::  x, xcn, y, Uexact, Uftcs, Uftcs1, Ucn, Ubtcs
   
   real(kind=8), dimension(:,:), allocatable :: Uprint
-  real(kind=8) :: tmax, hx, ht, xx, yy, R1, pre_coeff
+  real(kind=8) :: alpha, tmax, hx, ht, xx, yy, R1, pre_coeff
   real(kind=8) ::errorftcs, errorcn, errorbtcs
 
   integer:: N, m, Nt, flag
@@ -53,13 +53,13 @@ program test2D
   	WRITE(*,*)
   	WRITE(*,*) ' diff_solver solves the linear diffusion PDE '
   	WRITE(*,*)
-  	WRITE(*,*) ' dU/dt = D (\alpha D) U in \Omega, '
+  	WRITE(*,*) ' dU/dt = \alpha D^2 U in \Omega, '
   	WRITE(*,*) ' U = 0 on d\Omega '
   	WRITE(*,*) ' U(x,0) = sin(pi*x)sin(pi*y)'
   	WRITE(*,*)
   	WRITE(*,*) ' This is a test program where we solve the 2D heat equation '
-  	WRITE(*,*) ' We compare the exact solution to that with the BTCS method '
-  	WRITE(*,*) '  and Crank Nicholson method.'
+  	WRITE(*,*) ' We compare the exact solution to that with the FTCS method '
+  	WRITE(*,*) ' BTCS method and Crank Nicholson method.'
   	WRITE(*,*)
   	WRITE(*,*) ' This version is written in parallel using MPI.'
   	WRITE(*,*)
@@ -68,10 +68,12 @@ program test2D
   
   ! Read the inputs
   	open(unit=2,file="input.dat")
-  	read(2,*) tmax,m,Nt,flag
+  	read(2,*) alpha,tmax,m,Nt,flag
   	
   	WRITE(*,*) ' Inputs:'
   	WRITE(*,*)
+  	WRITE(*,*) ' alpha. '
+  	WRITE(*,*) 	alpha
   	WRITE(*,*) ' tmax. '
   	WRITE(*,*) 	tmax
   	WRITE(*,*) ' Nx,Ny '
@@ -93,7 +95,7 @@ program test2D
 
   	hx = 1.0_8/real(m-1,8)
   	ht = tmax/real(Nt-1,8)
-  	R1 = ht/(hx**2)
+  	R1 = alpha*ht/(hx**2)
 	pre_coeff = 1.0_8 / (1.0_8 + 4.0_8*R1)
 	
   	print*, 'Value of CFL coefficient'
@@ -111,6 +113,7 @@ program test2D
 !=============================================================================
  ! I should just pack this all in a buffer!
  
+  call MPI_Bcast(alpha,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ierr)
   call MPI_Bcast(tmax,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ierr)
   call MPI_Bcast(m,1,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
   call MPI_Bcast(Nt,1,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
@@ -141,6 +144,10 @@ program test2D
 
   allocate(Uprint(m-1,m-1))	
   
+  allocate(Aftcs%aa(5*nrows))
+  allocate(Aftcs%jj(5*nrows))
+  allocate(Aftcs%ii(N+1))
+  
   allocate(Abtcs%aa(5*nrows))
   allocate(Abtcs%jj(5*nrows))
   allocate(Abtcs%ii(N+1))
@@ -161,8 +168,15 @@ program test2D
   allocate(y%xx(N))
   allocate(xcn%xx(N))  
 
+  allocate(Uexact%xx(N))
+  allocate(Uftcs%xx(N))
+  allocate(Uftcs1%xx(nrows))
   allocate(Ubtcs%xx(N))
   allocate(Ucn%xx(N))
+  
+  Aftcs%n    = N
+  Aftcs%ibeg = ibeg
+  Aftcs%iend = iend
   
   Abtcs%n    = N
   Abtcs%ibeg = ibeg
@@ -195,6 +209,20 @@ program test2D
   xcn%iend = iend
   xcn%xx(xcn%ibeg:xcn%iend) = 0.0d0
   
+  Uexact%n = N
+  Uexact%ibeg = ibeg
+  Uexact%iend = iend
+  Uexact%xx(Uexact%ibeg:Uexact%iend) = 0.0d0
+  
+  Uftcs%n = N
+  Uftcs%ibeg = ibeg
+  Uftcs%iend = iend
+  
+  Uftcs1%n = nrows
+  Uftcs1%ibeg = ibeg
+  Uftcs1%iend = iend
+  Uftcs%xx(Uftcs%ibeg:Uftcs%iend) = 0.0d0
+  
   Ubtcs%n = N
   Ubtcs%ibeg = ibeg
   Ubtcs%iend = iend
@@ -204,20 +232,93 @@ program test2D
   Ucn%ibeg = ibeg
   Ucn%iend = iend
 !  Ucn%xx(Ucn%ibeg:Ucn%iend) = 0.0d0
+ 
+! Mesh spacing for time and space
+
+  hx = 1.0_8/real(m-1,8)
+  ht = tmax/real(Nt-1,8)
+  R1 = alpha*ht/(hx**2)
+
+!=============================================================================
+!					EXACT SOLUTION
+!=============================================================================
+
+  !if (myid == 0) then
+  	call exactsoln2D(Uexact,alpha,tmax,m)
+  	call FDsolution(Uprint,Uexact,m)
+
+  	open(unit=2, file='uexact.txt', ACTION="write", STATUS="replace")
+  	write(2,*)  m
+  	write(2,*) 
+  	write(2, *) Uprint
+  	close(2)
+  !end if
+  
+!=============================================================================
+!						FTCS
+!=============================================================================
+  
+! Initial solution, u_0
+
+  call exactsoln2D(Uftcs,alpha,0.0_8,m)
+
+  call FTCSmatrix(Aftcs,alpha,tmax,m,Nt,ibeg,iend) 
+
+! Then it should just be a case of U^{j} = A*U{j-1}
+  ierr = 0
+  call cpu_time(t1)
+  do j=2,Nt
+
+    x = Uftcs
+	call Mat_Mult(Aftcs,x,y)
+	Uftcs = y
+	
+  end do
+  call cpu_time(t2)
+  !  print out the solution
+   Uprint = 0.0_8
+  
+   call FDsolution(Uprint,Uftcs,m)
+  
+   open(unit=2, file='uftcs.txt', ACTION="write", STATUS="replace")
+   write(2,*) m
+   write(2,*) 
+   write(2, *) Uprint
+   close(2)
+      
+! Compute the error
+
+  call error(Uftcs,Uexact,errorftcs)
+
+  if (myid == 0) then 
+
+    write(*,*)
+    write(*,*) '========================================================================='
+    print*,    ' FTCS Solution '
+    write(*,*) '========================================================================='
+
+    write(*,*) 
+    write(*,*) ' Error '
+    write(*,*)
+    print*, errorftcs	 
+    write(*,*)
+    print*, ' time for solve'   
+    print'(f12.6)', t2-t1
+  	
+  end if 
   
 !=============================================================================
 !						BTCS
 !=============================================================================
  
 ! Initial solution, u_0
-print*, 'jere'
-  alpha = 1.0_8
+
   call exactsoln2D(Ubtcs,alpha,0.0_8,m)
-  print*, 'jere'
+  
 ! Make BTCS matrix  
   call BTCSmatrix(Abtcs,alpha,tmax,m,Nt,ibeg,iend) 
   
-   its_total = 0   
+    its_total = 0   
 	! now solve and produce output information 
 	 if (flag == 0) then
 	 
@@ -234,9 +335,9 @@ print*, 'jere'
   	elseif (flag == 1) then
 	    
 	    ! Get the preconditioning matrix, problem with MPI
-print*, 'jere'
+
 	    call BTCSmatrix_PRE(P,alpha,tmax,m,Nt,ibeg,iend)
-print*, 'jere'
+
 	 	call cpu_time(t1)
   		do j=2,Nt
 
@@ -271,8 +372,8 @@ print*, 'jere'
   write(2, *)( Uprint)
   close(2) 
 ! Compute the error
-  !call exactsoln2D(Uexact,alpha,tmax,m)
-  !call error(Uexact,Ubtcs,errorbtcs)
+  call exactsoln2D(Uexact,alpha,tmax,m)
+  call error(Uexact,Ubtcs,errorbtcs)
   
    if (myid == 0) then 
   
@@ -292,7 +393,7 @@ print*, 'jere'
     print*, ' Solver iterations total'   
     print*, its_total
     print*, ' Average Solver iterations'
-    print*, ((its_total/(Nt)))
+    print*, NINT(real(its_total/(Nt-1)))
   	
   	WRITE(*,*)
   	WRITE(*,*) '=========================================================================' 
@@ -304,6 +405,10 @@ print*, 'jere'
 ! Deallocate memory
 
   deallocate(Uprint)
+  
+  deallocate(Aftcs%aa)
+  deallocate(Aftcs%jj)
+  deallocate(Aftcs%ii)
   
   deallocate(Abtcs%aa)
   deallocate(Abtcs%jj)
@@ -321,6 +426,8 @@ print*, 'jere'
   deallocate(y%xx)
   deallocate(xcn%xx)
   
+  deallocate(Uexact%xx)
+  deallocate(Uftcs%xx)
   deallocate(Ubtcs%xx)
   deallocate(Ucn%xx)
 
