@@ -3,7 +3,7 @@
 !
 ! -----------------------------------------------------------------------
 
-subroutine cg(A,u,b,tol,maxits,its)
+subroutine cg(A,u,b,tol,maxits,its,rnorm)
 
 ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 !     Arguments:
@@ -14,6 +14,7 @@ subroutine cg(A,u,b,tol,maxits,its)
 !         b          right hand side vector in distributed form
 !         tol        tolerance for iterative method
 !         maxits     maximum number of iterations
+!		  rnorm 	norm of residual
 !        
 !       Output:
 !
@@ -24,10 +25,12 @@ subroutine cg(A,u,b,tol,maxits,its)
 
   use header
 
+  
   implicit none
 
   type(Matrix), intent(in)    :: A
   type(Vector), intent(inout) :: u
+  real(kind=8), intent(out) :: rnorm
   type(Vector), intent(in)    :: b
   real(kind=8), intent(in) :: tol
   integer, intent(in)  :: maxits
@@ -106,6 +109,7 @@ subroutine cg(A,u,b,tol,maxits,its)
      rtr  = delta
 
      norm = sqrt(rtr)
+     rnorm = norm
      if (norm/norm0 < tol) exit
 
      call dscal(n_loc,beta,p%xx(p%ibeg),1)

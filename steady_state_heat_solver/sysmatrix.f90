@@ -1,11 +1,12 @@
 !==========================================================================
 !
-!  Subroutine to make the system matrix for the 2-D, five-point stencil 
+!  Subroutine to set the RHS for the 2-D, five-point stencil 
 !  of a general 2nd-order elliptic PDE in compressed row storage format 
 !  (parallel version).
 !  The discretied PDE
 ! 		-\grad a(x,y) \grad U + sigma U = g,  in D
 !									  U = 0,  on D
+! Also options to add non zero boundary conditions in rhs.f90 function 
 !==========================================================================
 
 subroutine sysmatrix(A,m,ibeg,iend,sigma)

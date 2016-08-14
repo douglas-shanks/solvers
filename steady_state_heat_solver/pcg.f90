@@ -3,7 +3,7 @@
 !
 ! -----------------------------------------------------------------------
 
-subroutine pcg(A,u,b,tol,maxits,its,M)
+subroutine pcg(A,u,b,tol,maxits,its,M,rnorm)
 
 ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 !     Arguments:
@@ -15,7 +15,8 @@ subroutine pcg(A,u,b,tol,maxits,its,M)
 !         tol        tolerance for iterative method
 !         maxits     maximum number of iterations
 !         M 		preconditioner
-
+!		  rnorm 	norm of residual
+!
 !       Output:
 !
 !         u          solution vector in distibuted form 
@@ -31,6 +32,7 @@ subroutine pcg(A,u,b,tol,maxits,its,M)
   type(Vector), intent(inout) :: u
   type(Vector), intent(in)    :: b
   real(kind=8), intent(in) :: tol
+  real(kind=8), intent(out) :: rnorm
   integer, intent(in)  :: maxits
   integer, intent(out) :: its
 
@@ -123,6 +125,7 @@ subroutine pcg(A,u,b,tol,maxits,its,M)
      rtr  = delta
 
      norm = sqrt(rtr)
+     rnorm = norm
      if (norm/norm0 < tol) exit
 
      call dscal(n_loc,beta,p%xx(p%ibeg),1)

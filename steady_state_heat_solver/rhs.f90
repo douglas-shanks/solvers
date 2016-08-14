@@ -6,10 +6,7 @@
 !  The discretied PDE
 ! 		-\grad a(x,y) \grad U + sigma U = g,  in D
 !									  U = 0,  on D
-! g is set such that u = y when i = 1
-!					   = 0 when j = 1
-!					   = y when i = m-1
-!					   = 1 when i = m-1
+! Also options to add non zero boundary conditions
 !==========================================================================
 
 subroutine RHS(b,m)
@@ -20,7 +17,7 @@ subroutine RHS(b,m)
   integer, intent(in) :: m
 
   integer :: row,i,j,c
-  real(kind=8) :: xm,xp,ym,yp
+  real(kind=8) :: xm,xp,ym,yp, PI=4.0_8*atan(1.0_8)
 
   interface
     function alpha(x,y) result (val)
@@ -50,25 +47,27 @@ subroutine RHS(b,m)
      xp = (i+0.5d0)/m
      ym = (j-0.5d0)/m
      yp = (j+0.5d0)/m
-
-
+! At the moment this just fixes rhs f = 1 and all boundary conditions u = 0
+	b%xx(row) = 1.0d0
+	
+! Comment these in to add non zero boundary conditions	
 ! If i = 1 then the unknown is next to the left boundary where u=y
 
-     if (i == 1) then
-        b%xx(row) = b%xx(row) + 0.5d0*c*(alpha(xm,ym) + alpha(xm,yp)) * dble(j)/m
-     endif
+     !if (i == 1) then
+     !   b%xx(row) = b%xx(row) + 0.5d0*c*(alpha(xm,ym) + alpha(xm,yp)) * dble(j)/m
+     !endif
 
 ! If i = m-1 then the unknown is next to the right boundary where u=y also
 
-     if (i == m-1) then
-        b%xx(row) = b%xx(row) + 0.5d0*c*(alpha(xp,ym) + alpha(xp,yp)) * dble(j)/m
-     endif
+     !if (i == m-1) then
+     !   b%xx(row) = b%xx(row) + 0.5d0*c*(alpha(xp,ym) + alpha(xp,yp)) * dble(j)/m
+     !endif
 
 ! If j = m-1 then the unknown is next to the top boundary where u=1
 
-     if (j == m-1) then
-        b%xx(row) = b%xx(row) + 0.5d0*c*(alpha(xm,yp) + alpha(xp,yp))
-     endif
+     !if (j == m-1) then
+     !   b%xx(row) = b%xx(row) + 0.5d0*c*(alpha(xm,yp) + alpha(xp,yp))
+     !endif
 
   end do
  

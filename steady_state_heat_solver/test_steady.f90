@@ -5,6 +5,11 @@
 !									  U = 0,  on D
 ! 
 ! and assortment of linear solvers are used
+!
+!
+!	Only use Error if there is an exact solution to compare with!
+!   Otherwise print out the reisdual.
+!
 !=============================================================
 
 program test_steady
@@ -20,7 +25,7 @@ program test_steady
   type(Matrix)  :: A, P
   type(Vector)  :: u, u_ex, b
   
-  real (kind=8) :: norm
+  real (kind=8) :: norm, rnorm
   real(kind=8), dimension(:,:), allocatable :: Uprint
   
   integer       :: m
@@ -143,13 +148,13 @@ program test_steady
 
 ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 !     Set exact solution u_ex to a random vector and calculate rhs b = A*u
+!     Or, we call rhs which specifies given non zero boundary conditions
+!     and rhs f.
 ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-  call random_number(u_ex%xx(ibeg:iend))
-  
-  !call rhs(b,m)
-  
-  call Mat_Mult(A,u_ex,b)
+  !call random_number(u_ex%xx(ibeg:iend))
+  call rhs(b,m)
+  !call Mat_Mult(A,u_ex,b)
 
 ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 !     Apply Jacobi's method to solve the system
@@ -187,7 +192,7 @@ program test_steady
 
  t1 = MPI_Wtime()
  
- call cg(A,u,b,eps,kmax,its)
+ call cg(A,u,b,eps,kmax,its,rnorm)
  
  t2 = MPI_Wtime()
 
@@ -195,13 +200,13 @@ program test_steady
 !     Check the error for CG
 ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-  call Error(u,u_ex,norm)
+  !call Error(u,u_ex,norm)
   
   if (myid == 0) then
      if (its > kmax) then
-        write(*,200) kmax,norm
+        write(*,200) kmax,rnorm
      else
-        write(*,210) its,norm
+        write(*,210) its,rnorm
      endif
 
 200  format('Maximum number of iterations (',i5,          &
@@ -213,12 +218,13 @@ program test_steady
  ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 !     Apply PCG to solve the system
 ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
- 
+ ! reset the residual variable
+ rnorm = 0.0
  call sysmatrix_pre(P,m,ibeg,iend,sigma,P)
  
  t1 = MPI_Wtime()
  
- call pcg(A,u,b,eps,kmax,its,P)
+ call pcg(A,u,b,eps,kmax,its,P,rnorm)
  
  t2 = MPI_Wtime()
 
@@ -226,13 +232,13 @@ program test_steady
 !     Check the error for PCG
 ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-  call Error(u,u_ex,norm)
+  !call Error(u,u_ex,norm)
   
   if (myid == 0) then
      if (its > kmax) then
-        write(*,300) kmax,norm
+        write(*,300) kmax,rnorm
      else
-        write(*,310) its,norm
+        write(*,310) its,rnorm
      endif
 
 300  format('Maximum number of iterations (',i5,          &
