@@ -37,8 +37,9 @@ This version has a variable diffusion coefficient making the problem harder to
 solve numerically and thus physically more interesting.
 
 TODO:
-
-Thread the parallel code using openMP
+-Add in variable diffusion coefficient
+-Get rid of FTCS
+-Thread the code using openMP
 
 ============================================================================
 ############################################################################
