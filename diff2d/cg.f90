@@ -25,7 +25,6 @@ subroutine cg(A,u,b,tol,maxits,its,rnorm)
 
   use header
 
-  
   implicit none
 
   type(Matrix), intent(in)    :: A
