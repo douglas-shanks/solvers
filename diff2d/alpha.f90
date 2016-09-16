@@ -2,9 +2,9 @@
 !
 !   Function evaluating the material parameter at the point (x,y) in 
 ! 	the PDE
-! 		-\grad a(x,y) \grad U + sigma U = g,  in D
-!									  U = 0,  on D
-!   (At the moment alpha(x,y) = 1.0 everywhere, i.e. the Laplacian)
+! 		\partial_{t}U +\grad a(x,y) \grad U + sigma U = g,  in D
+!			U = 0,  on D
+!   (Setting alpha(x,y) = 1.0 everywhere gives the Laplacian, good for debug)
 !
 !==================================================================
 
