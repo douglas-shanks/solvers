@@ -12,7 +12,7 @@ computed.
 
 1D:
 
-u_0(x,0) = sin(pi*x).
+u_0(x,0) = sin(\pi * x).
 
 2D:
 
@@ -30,7 +30,7 @@ or
 ./test2D
 
 This generates the exact solution, FTCS solution, BTCS solution
-and CN solution. The 2 norm of the error is then computed for each and wall clock time computed.
+and CN solution. The 2-norm of the error is then computed for each and wall clock time computed.
 
 ============================================================================
 ############################################################################
