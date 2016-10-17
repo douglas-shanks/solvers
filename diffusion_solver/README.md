@@ -16,7 +16,7 @@ u_0(x,0) = sin(pi*x).
 
 2D:
 
-u_0(x,y,0) = sin(pi*x)*sin(pi*y).
+u_0(x,y,0) = sin(\pi * x)*sin(\pi * y).
 
 To run:
 
