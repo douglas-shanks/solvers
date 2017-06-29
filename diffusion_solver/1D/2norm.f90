@@ -11,4 +11,4 @@ error = 0
     	  error = error + SQRT((U1(i)- U2(Nt,i))**2)
     enddo
 
-end soubroutine norm
+end subroutine norm
